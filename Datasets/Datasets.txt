@@ -1,5 +1,5 @@
 For clean ingredients:
 
-https://recipenlg.cs.put.poznan.pl/dataset (full_dataset.csv)
+https://recipenlg.cs.put.poznan.pl/dataset (full_dataset.csv) (too big to push to github)
 https://dominikschmidt.xyz/simplified-recipes-1M/ (simplified-recipes-1M.npz)
 https://www.kaggle.com/datasets/kaggle/recipe-ingredients-dataset
