@@ -9,6 +9,10 @@ import ast
 import difflib
 import itertools
 
+#remove warnings about copying over dataframe
+
+pd.options.mode.chained_assignment = None
+
 measurements = ["tbsp","tablespoon","tsp","teaspoon","oz","ounce",
                 "fl.","oz","fluid ounce","c","cup","qt","quart","pt",
                 "pint","gal","gallon","lb","pound","mL","milliliter",
@@ -67,19 +71,21 @@ def loadIngredients(file):
     print("file: ", file)
     path = os.getcwd() + "\\Datasets\\"
     ingredients = []
+
+    print("Loading ingredients...", end='')
     if file == 'simplified-recipes-1M.npz':
         # load valid ingredients from simplified-recipes-1M, obtained from https://dominikschmidt.xyz/simplified-recipes-1M/
         with np.load(path+file) as data:
             ingredients = data['ingredients']
+        print("done.")
 
+    #recipe dataset obtained from: https://recipenlg.cs.put.poznan.pl/dataset
     elif file == "full_dataset.csv":
-        print("Loading ingredients...")
-        #recipe dataset obtained from: https://recipenlg.cs.put.poznan.pl/dataset
         recipes = pd.read_csv(path+file)
-        print("Completed.")
+        print("done.",)
         print("Loading recipes...")
         raw_ingredients = recipes['NER'].tolist()
-        print("Completed.")
+        print("done.")
 
         print("Formatting ingredients...")
 
@@ -106,6 +112,7 @@ def loadIngredients(file):
         sheet = pd.read_json(path+file)
 
         ingredients = sheet['ingredients'].tolist()
+        print("done.")
         
         print("  Creating singular list...", end='')
         
@@ -125,7 +132,7 @@ def loadIngredients(file):
 def cleanIngredients(sheet, ingredients):
     #loop through each row
     for index, row in sheet.iterrows():
-        print("current row: ", index)
+        #print("current row: ", index)
         #loop over each column
         for col in sheet.columns:
             if col == "Cleaned_Ingredients":
@@ -159,7 +166,7 @@ def cleanIngredients(sheet, ingredients):
                     
                     #print("goodIngredients: ", goodIngredients)
 
-                    #if there is at least one valid word, then it is a valid ingredient and add it to
+                    #if there is at least one valid word, it is a valid ingredient so add it to
                     #the current recipe ingredients list
                     if len(goodIngredients) != 0:
                         recipeIngredients[i] = ' '.join(goodIngredients)
@@ -170,15 +177,15 @@ def cleanIngredients(sheet, ingredients):
                         # words/numbers that are not part of the ingredient name. I found it 
                         # not as effective as I would want so I am commenting it out and instead
                         # just deleting ingredients that are not found.
-                        #print("words: ", words)
-                        #
-                        #words = [word for word in words if not word.isnumeric()]
-                        #print("removing ingredient: ", words)
-                        #for word in measurements:
-                        #    if word in words:
-                        #        print("found word in words: ", word)
-                        #        words.remove(word)
-                        #recipeIngredients[i] = ' '.join(words)
+                            #print("words: ", words)
+                            #
+                            #words = [word for word in words if not word.isnumeric()]
+                            #print("removing ingredient: ", words)
+                            #for word in measurements:
+                            #    if word in words:
+                            #        print("found word in words: ", word)
+                            #        words.remove(word)
+                            #recipeIngredients[i] = ' '.join(words)
 
                         #if there is no valid word, remove ingredient altogether
                         recipeIngredients[i] = None
@@ -223,6 +230,7 @@ def cleanIngredients(sheet, ingredients):
                             if not perm:
                                 recipeIngredients.remove(recipeIngredients[i])
                                 i-=1
+                                continue
                             
                             perm = ' '.join(perm)
 
@@ -244,8 +252,8 @@ def cleanIngredients(sheet, ingredients):
                         lengthRI-=1
                     j+=1
 
-                print(sheet['Title'][index])
-                print("FINAL recipeIngredients: ", recipeIngredients)
+                #print(sheet['Title'][index])
+                #print("FINAL recipeIngredients: ", recipeIngredients)
 
                 #add cleaned ingredients over previous ones
                 sheet[col][index] = recipeIngredients
@@ -281,9 +289,9 @@ def main():
     sheet = cleanIngredients(sheet, ingredients)
     print("Completed.")
 
-    print(sheet.head())
-    print(sheet.info())
-    print(sheet.describe())
+    #print(sheet.head())
+    #print(sheet.info())
+    #print(sheet.describe())
 
     print("Copying to file " + args.newfile + "...")
     #copy sheet into a new file
