@@ -28,7 +28,7 @@ words_to_avoid = ["dry", "plus", "sliced", "more", "other", "sodium",
 # are words that cannot, alone, be considered an ingredient but are
 # important parts of whole ingredients. e.g. white pepper needs 'white'
 # but 'white' is not an ingredient in itself)
-ingredients_to_avoid = ["green", "white"]
+ingredients_to_avoid = ["green", "white", "black"]
 
 approved_words = ["italian", "loaf"]
 
@@ -61,81 +61,90 @@ def copyFile(args):
     except IsADirectoryError:
         sys.exit("Entered file name is a directory. Make sure you only enter a valid file name.")
     except PermissionError:
-        sys.exit("Permission to copy into new file denied.")
+        sys.exit("Permission to copy into new file denied. (File is most likely opened in another window.)")
     except:
         sys.exit("There was a problem copying data to new file. Make sure a only a valid file name is entered.")
     
     return fileName
 
-def loadIngredients(file):
-    print("file: ", file)
+def loadIngredients():
+    #print("file: ", file)
     path = os.getcwd() + "\\Datasets\\"
     ingredients = []
+    openedFile = False
 
-    print("Loading ingredients...", end='')
-    if file == 'simplified-recipes-1M.npz':
+    if os.path.isfile(path + "simplified-recipes-1M.npz"):
+        print("Loading ingredients...", end='')
         # load valid ingredients from simplified-recipes-1M, obtained from https://dominikschmidt.xyz/simplified-recipes-1M/
-        with np.load(path+file) as data:
-            ingredients = data['ingredients']
+        with np.load(path+"simplified-recipes-1M.npz") as data:
+            ingredients = list(data['ingredients'])
         print("done.")
+        openedFile = True
 
     #recipe dataset obtained from: https://recipenlg.cs.put.poznan.pl/dataset
-    elif file == "full_dataset.csv":
-        recipes = pd.read_csv(path+file)
+    if os.path.isfile(path +  "full_dataset.csv"):
+        print("Loading ingredients...", end='')
+        recipes = pd.read_csv(path+"full_dataset.csv")
         print("done.",)
         print("Loading recipes...")
-        raw_ingredients = recipes['NER'].tolist()
+        raw = recipes['NER'].tolist()
         print("done.")
 
         print("Formatting ingredients...")
 
+        ingredients_raw = []
         print("  Changing type to list...", end='')
-        for row in raw_ingredients:
-            ingredients.append(ast.literal_eval(row))
+        for row in raw:
+            ingredients_raw = ast.literal_eval(row)
         print("done.")
         
         print("  Creating singular list...", end='')
         
-        ingredients = [j for i in ingredients for j in i]
-        print("done.")
-        print("  Making all ingredients lowercase...", end='')
-        ingredients = [i.lower() for i in ingredients]
-        print("done.")
-        print("  Removing duplicates...", end='')
-        ingredients = [*set(ingredients)]
+        ingredients.extend([j for i in ingredients_raw for j in i])
         print("done.")
 
         print("Completed.")
+
+        openedFile = True
     
     #recipe dataset obtained from: https://www.kaggle.com/datasets/kaggle/recipe-ingredients-dataset
-    elif file == "Ingredients.json":
-        sheet = pd.read_json(path+file)
+    if os.path.isfile(path + "Ingredients.json"):
+        print("Loading ingredients...", end='')
+        sheet = pd.read_json(path+"Ingredients.json")
 
-        ingredients = sheet['ingredients'].tolist()
+        ingredients_raw = sheet['ingredients'].tolist()
         print("done.")
         
         print("  Creating singular list...", end='')
         
-        ingredients = [j for i in ingredients for j in i]
-        print("done.")
-        print("  Making all ingredients lowercase...", end='')
-        ingredients = [i.lower() for i in ingredients]
-        print("done.")
-        print("  Removing duplicates...", end='')
-        ingredients = [*set(ingredients)]
-        print("done.")
+        ingredients.extend([j for i in ingredients_raw for j in i])
+        print("done.")        
+
+        openedFile = True
     
+    if not openedFile:
+        sys.exit("Invalid recipe dataset. Make sure file name is correct.")
+
+    print("  Making all ingredients lowercase...", end='')
+    ingredients = [i.lower() for i in ingredients]
+    print("done.")
+    print("  Removing duplicates...", end='')
+    ingredients = [*set(ingredients)]
+    print("done.")
+
     return ingredients
-    
 
 
-def cleanIngredients(sheet, ingredients):
+def cleanIngredients(sheet, ingredients, recipe_Col):
     #loop through each row
     for index, row in sheet.iterrows():
-        #print("current row: ", index)
+        print("\r", end='')
+        print("Current row: ", index, "out of ", len(sheet[recipe_Col]), end='')
         #loop over each column
         for col in sheet.columns:
-            if col == "Cleaned_Ingredients":
+            if col == recipe_Col:
+                #print("sheet[col][index]: ", sheet[col][index][0])
+                #print("type(sheet[col][index]): ", type(sheet[col][index][0]))
                 #make all ingredients lowercase
                 sheet[col][index] = sheet[col][index].lower()
                 
@@ -212,7 +221,7 @@ def cleanIngredients(sheet, ingredients):
                         allComb = list()
                         tempComb = list()
                         for j in range(len(subIng)):
-                            if j>2:
+                            if j>4:
                                 break
                             tempComb.append(itertools.permutations(subIng, j+1))
                         for j in range(len(tempComb)):
@@ -237,7 +246,8 @@ def cleanIngredients(sheet, ingredients):
                             #print("Checking for substring as ingredient: ", perm)
                             #closestI = difflib.get_close_matches(perm, ingredients, cutoff=1)
                             #print("closestI: ", closestI)
-
+                            if perm in ingredients_to_avoid:
+                                continue
                             #if permutation is a valid ingredient, add it to ingredient list
                             if perm in ingredients:
                                 recipeIngredients[i] = perm
@@ -263,9 +273,9 @@ def cleanIngredients(sheet, ingredients):
 def main():
     #CLA argument definitions
     parser = argparse.ArgumentParser("Copy recipe data set, clean it, and output in a new file.\n")
-    parser.add_argument('--oldfile', '-f', type=str, help="File containing uncleaned recipe data.")
-    parser.add_argument('--newfile', '-n', type=str, help="New file to copy cleaned data into.")
-    parser.add_argument('--ingdata', '-i', type=str, help="File containing ingredient list.")
+    parser.add_argument('--oldfile', '-f', type=str, required=True, help="File containing uncleaned recipe data.")
+    parser.add_argument('--column', '-c', type=str, required=True, help="Row name with recipes.")
+    parser.add_argument('--newfile', '-n', type=str, required=True, help="New file to copy cleaned data into.")
     parser.add_argument('--overwriteFile', '-o', action='store_false', help="Give warning about overwriting a pre-existing file.")
     args = parser.parse_args()
 
@@ -274,19 +284,44 @@ def main():
     newFile = os.getcwd() + "\\Cleaned_Datasets\\" + copyFile(args)
 
     #get a copy of the sheet from the old file
-    sheet = pd.read_csv(newFile)
+    if oldFile.endswith(".csv"):
+        sheet = pd.read_csv(oldFile)
+    if oldFile.endswith(".json"):
+        print("Loading recipes into program.")
+        sheet = pd.read_json(oldFile)
+        print("Finished")
+        # I NEED TO FIGURE OUT HOW TO CONVERT THE 1M DATASET INTO
+        # A SINGLE LIST
+        row = 0
+        ingredients = []
+        print("Formatting recipes...")
+        for recipe in sheet['ingredients']:
+            rIng = []
+            for ingredient in recipe:
+                rIng.append(ingredient['text'])
+            #print("sheet['ingredients'][row]: ", sheet['ingredients'][row])
+            #print("TTYYYPPPEEEEEE (sheet['ingredients'][row]): ", type(sheet['ingredients'][row]))
+            sheet['ingredients'][row] = rIng
+            #print("sheet['ingredients'][row]: ", sheet['ingredients'][row])
+            #print("TTYYYPPPEEEEEE (sheet['ingredients'][row]): ", type(sheet['ingredients'][row]))
+            row += 1
+            print("\r", end='')
+            print("Current row: ", row, "out of ", len(sheet['ingredients']), end='')
+        print("done.")
+    print(sheet.info)
 
-    ingredients = loadIngredients(args.ingdata)
+
+    ingredients = loadIngredients()
 
     #replace any empty cells with NaN
     sheet = sheet.replace('', np.nan)
 
     #drop all recipes with NaN value for Title or Ingredients
-    sheet = sheet.dropna(axis="rows", subset=['Title', 'Cleaned_Ingredients', 'Ingredients'])
+    sheet = sheet.dropna(subset=[args.column])
     
-    print("Cleaning ingredients...")
+    print("Cleaning recipes...")
     #clean recipes into useful format (only ingredient names)
-    sheet = cleanIngredients(sheet, ingredients)
+    sheet = cleanIngredients(sheet, ingredients, args.column)
     print("Completed.")
 
     #print(sheet.head())
