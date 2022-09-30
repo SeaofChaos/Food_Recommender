@@ -274,7 +274,7 @@ def main():
     #CLA argument definitions
     parser = argparse.ArgumentParser("Copy recipe data set, clean it, and output in a new file.\n")
     parser.add_argument('--oldfile', '-f', type=str, required=True, help="File containing uncleaned recipe data.")
-    parser.add_argument('--column', '-c', type=str, required=True, help="Row name with recipes.")
+    parser.add_argument('--column', '-c', type=str, required=True, help="Column name with recipes.")
     parser.add_argument('--newfile', '-n', type=str, required=True, help="New file to copy cleaned data into.")
     parser.add_argument('--overwriteFile', '-o', action='store_false', help="Give warning about overwriting a pre-existing file.")
     args = parser.parse_args()
@@ -286,30 +286,34 @@ def main():
     #get a copy of the sheet from the old file
     if oldFile.endswith(".csv"):
         sheet = pd.read_csv(oldFile)
+    #1M dataset cleaning if import dataset
     if oldFile.endswith(".json"):
         print("Loading recipes into program.")
         sheet = pd.read_json(oldFile)
         print("Finished")
-        # I NEED TO FIGURE OUT HOW TO CONVERT THE 1M DATASET INTO
-        # A SINGLE LIST
+
         row = 0
         ingredients = []
+        lenIng = len(sheet['ingredients'])
         print("Formatting recipes...")
         for recipe in sheet['ingredients']:
-            rIng = []
+            ing = []
             for ingredient in recipe:
-                rIng.append(ingredient['text'])
+                ing.append(ingredient['text'])
+            
+            sheet['ingredients'][row] = [*ing]
+            #sheet['ingredients'][row] = rIng
             #print("sheet['ingredients'][row]: ", sheet['ingredients'][row])
-            #print("TTYYYPPPEEEEEE (sheet['ingredients'][row]): ", type(sheet['ingredients'][row]))
-            sheet['ingredients'][row] = rIng
-            #print("sheet['ingredients'][row]: ", sheet['ingredients'][row])
-            #print("TTYYYPPPEEEEEE (sheet['ingredients'][row]): ", type(sheet['ingredients'][row]))
+            
             row += 1
             print("\r", end='')
-            print("Current row: ", row, "out of ", len(sheet['ingredients']), end='')
-        print("done.")
-    print(sheet.info)
+            print("Current row: ", row, "out of ", lenIng, end='')
+        print(" done.")
+        #print(sheet.info)
 
+        #i need to test this, or just move it over to other file
+        oldFile = os.getcwd() + "\\Datasets\\" + args.oldfile[:len(args.oldfile)-4] + 'csv'
+        sheet.to_csv(oldFile)
 
     ingredients = loadIngredients()
 
