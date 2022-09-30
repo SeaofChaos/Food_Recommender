@@ -139,7 +139,7 @@ def cleanIngredients(sheet, ingredients, recipe_Col):
     #loop through each row
     for index, row in sheet.iterrows():
         print("\r", end='')
-        print("Current row: ", index, "out of ", len(sheet[recipe_Col]), end='')
+        print("Current row:", index, "out of", len(sheet[recipe_Col]), end='')
         #loop over each column
         for col in sheet.columns:
             if col == recipe_Col:
@@ -221,7 +221,7 @@ def cleanIngredients(sheet, ingredients, recipe_Col):
                         allComb = list()
                         tempComb = list()
                         for j in range(len(subIng)):
-                            if j>4:
+                            if j>3:
                                 break
                             tempComb.append(itertools.permutations(subIng, j+1))
                         for j in range(len(tempComb)):
@@ -307,7 +307,7 @@ def main():
             
             row += 1
             print("\r", end='')
-            print("Current row: ", row, "out of ", lenIng, end='')
+            print("Current row:", row, "out of", lenIng, end='')
         print(" done.")
         #print(sheet.info)
 
@@ -326,7 +326,7 @@ def main():
     print("Cleaning recipes...")
     #clean recipes into useful format (only ingredient names)
     sheet = cleanIngredients(sheet, ingredients, args.column)
-    print("Completed.")
+    print("\nCompleted.")
 
     #print(sheet.head())
     #print(sheet.info())

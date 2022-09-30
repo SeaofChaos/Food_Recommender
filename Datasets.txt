@@ -7,3 +7,4 @@ https://www.kaggle.com/datasets/kaggle/recipe-ingredients-dataset
 Without clean ingredients:
 
 https://www.kaggle.com/datasets/pes12017000148/food-ingredients-and-recipe-dataset-with-images (has images)
+http://im2recipe.csail.mit.edu/dataset/download/ (large dataset)
