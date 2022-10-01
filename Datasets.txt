@@ -1,10 +1,14 @@
-With clean ingredients:
+The cleaning program cleanRecipeData.py is only designed to be compatible with these following datasets.
+
+
+For clean ingredients (or datasets with raw ingredient names. e.g. {'walnut', 'pecans', 'butter', ...}))
+			These are used to find the simplest valid ingredient in an unclean ingredient within a recipe.):
 
 https://recipenlg.cs.put.poznan.pl/dataset (full_dataset.csv)
 https://dominikschmidt.xyz/simplified-recipes-1M/ (simplified-recipes-1M.npz)
 https://www.kaggle.com/datasets/kaggle/recipe-ingredients-dataset
 
-Without clean ingredients:
+Without clean ingredients (or datasets with raw recipes. e.g. {'1 cup walnuts', '1/2 cup whole milk', '1 box penne', ...}):
 
 https://www.kaggle.com/datasets/pes12017000148/food-ingredients-and-recipe-dataset-with-images (has images)
 http://im2recipe.csail.mit.edu/dataset/download/ (large dataset)

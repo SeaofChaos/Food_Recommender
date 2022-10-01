@@ -1,3 +1,17 @@
+########################################################
+#
+#   Author:     Ryan Quinn
+#   Class:      Artificial Intelligence 1 (Independent Study)
+#   Professor:  Dr. Dylan Schwesinger
+#   Project:    Independent project
+#   Semester:   Fall 2022
+#
+#   Filename:   cleanRecipeData.py
+#   Purpose:    Cleans datasets containing recipes into a format that 
+#               my machine learning algorithm can easily work with.
+#
+########################################################
+
 import pandas as pd
 import sys
 import os
@@ -32,15 +46,14 @@ ingredients_to_avoid = ["green", "white", "black"]
 
 approved_words = ["italian", "loaf"]
 
-# TO DO IF I HAVE EXTRA TIME
-# Add in more customization on what kind of recipe file you can input. Make it so 
-# any file with an 'ingredients' column can be entered and it is able to handle 
-# formats such as: a list of strings, a list of lists, or just a complete list of 
-# ingredients.
 
 def copyFile(args):
-    # This function checks for valid command line arguments along with whether the 
-    # new file name exists and if it can be properly copied.
+    """
+    This function checks for valid command line arguments along with checking if the 
+    new file name exists and whether it can be properly copied.
+
+    :return: Name of the file copied from the old file.
+    """
     fileName = args.newfile
     if not (not fileName.endswith(".csv") or not fileName.endswith(".json")):
         sys.exit("Make sure the file name contains its extension (csv or json).")
@@ -67,8 +80,19 @@ def copyFile(args):
     
     return fileName
 
+
 def loadIngredients():
-    #print("file: ", file)
+    """
+    Loads in cleaned ingredients from at least one of these datasets:
+     - simplified-recipes-1M.npz
+     - full_dataset.csv
+     - Ingredients.json
+    These datasets contain cleaned ingredients and can be obtained from
+    the websites listed inside of the Datasets.txt file in the main project
+    directory.
+
+    :return: List of all ingredient names.
+    """
     path = os.getcwd() + "\\Datasets\\"
     ingredients = []
     openedFile = False
@@ -135,7 +159,56 @@ def loadIngredients():
     return ingredients
 
 
+def loadJSON(oldFile, args):
+    """
+    This function reads in raw recipes specifically from the 1M dataset (link can be
+    found in the Datasets.txt file in the base project directory) and formats them
+    to work with the cleaning algorithm. It creates a separate csv file with the
+    properly formatted recipes.
+
+    :param oldFile: The name of the 1M dataset json file.
+    :param args: Contains the command line arguments.
+    :return: Returns name of file .
+    """
+    print("Loading recipes into program.")
+    sheet = pd.read_json(oldFile)
+    print("Finished")
+
+    row = 0
+    ingredients = []
+    lenIng = len(sheet['ingredients'])
+    print("Formatting recipes...")
+    for recipe in sheet['ingredients']:
+        ing = []
+        for ingredient in recipe:
+            ing.append(ingredient['text'])
+        
+        sheet['ingredients'][row] = [*ing]
+        #sheet['ingredients'][row] = rIng
+        #print("sheet['ingredients'][row]: ", sheet['ingredients'][row])
+        
+        row += 1
+        print("\r", end='')
+        print("Current row:", row, "out of", lenIng, end='')
+    print(" done.")
+    #print(sheet.info)
+
+    #create temporary csv file that can be used for processing
+    oldFile = os.getcwd() + "\\Datasets\\temp.csv"
+    sheet.to_csv(oldFile)
+    return oldFile
+
+
 def cleanIngredients(sheet, ingredients, recipe_Col):
+    """
+    Algorithm for cleaning ingredients. It takes in a sheet and a specified
+    column name and strips it of anything other than ingredient names.
+
+    :sheet: Dataframe to clean.
+    :ingredients: List of valid ingredient names.
+    :recipe_Col: Column containing the recipe ingredients that need to be cleaned.
+    :return: Sheet with cleaned ingredients in specified column instead of uncleaned ones.
+    """
     #loop through each row
     for index, row in sheet.iterrows():
         print("\r", end='')
@@ -143,8 +216,6 @@ def cleanIngredients(sheet, ingredients, recipe_Col):
         #loop over each column
         for col in sheet.columns:
             if col == recipe_Col:
-                #print("sheet[col][index]: ", sheet[col][index][0])
-                #print("type(sheet[col][index]): ", type(sheet[col][index][0]))
                 #make all ingredients lowercase
                 sheet[col][index] = sheet[col][index].lower()
                 
@@ -156,14 +227,13 @@ def cleanIngredients(sheet, ingredients, recipe_Col):
                     #get rid of non alpha-numeric characters
                     recipeIngredients[i] = re.sub("([\(\[]).*?([\)\]])", "\g<1>\g<2>", recipeIngredients[i])
                     recipeIngredients[i] = re.sub(r'\W+', ' ', recipeIngredients[i])
-                    #print("recipeIngredients[i]: ", recipeIngredients[i])
+                    
                     #keeps track of ingredients in recipe that exist in imported ingredients list
                     goodIngredients = []
                     
                     words = recipeIngredients[i].split(' ')
                     #loop over each ingredient
                     for word in words:
-                        #print("Checking word: ", word)
                         if len(word) < 3:
                             continue
                         if word in words_to_avoid or word in goodIngredients:
@@ -171,9 +241,6 @@ def cleanIngredients(sheet, ingredients, recipe_Col):
                         if word in ingredients or word in approved_words:
                             #add it to goodIngredients if not in words_to_avoid or word in approved_words
                             goodIngredients.append(word)
-                            #print("Added word to goodIngredients: ", word)
-                    
-                    #print("goodIngredients: ", goodIngredients)
 
                     #if there is at least one valid word, it is a valid ingredient so add it to
                     #the current recipe ingredients list
@@ -199,23 +266,10 @@ def cleanIngredients(sheet, ingredients, recipe_Col):
                         #if there is no valid word, remove ingredient altogether
                         recipeIngredients[i] = None
                         continue
-                    
-                    #try to find the closest matching ingredient name to word
-                    #closestI = difflib.get_close_matches(recipeIngredients[i], ingredients, cutoff=0.9)
-                    #print("closestI: ", closestI)
-
-                    #if there is a close match, add that ingredient to recipe
-                    #if closestI:
-                        #print("adding ingredient " + closestI[0])
-                        #recipeIngredients[i] = closestI[0]
                         
-                    #if there is not a good match, split into individual words and test every permutation
-                    #until a valid ingredient is found
+                    #split into individual words and test every permutation until a valid ingredient is found
                     if recipeIngredients[i] not in ingredients:
                         subIng = recipeIngredients[i].split(' ')
-
-                        #print("Ingredient not in ingredients. Checking permutations")
-                        #print("recipeIngredients[i]: ", recipeIngredients[i])
                         
                         #get all possible permutations into a list
                         allComb = list()
@@ -227,14 +281,9 @@ def cleanIngredients(sheet, ingredients, recipe_Col):
                         for j in range(len(tempComb)):
                             for perm in tempComb[j]:
                                 allComb.append(list(perm))
-                        #print("allComb: ", allComb)
-
-                        #print("Checking all permutations...")
-
+                        
                         #for each permutation in reverse order (starting at biggest words)
                         for perm in reversed(allComb):
-                            #print("perm: ", perm)
-
                             #if no valid permutations, don't add any ingredient
                             if not perm:
                                 recipeIngredients.remove(recipeIngredients[i])
@@ -243,9 +292,6 @@ def cleanIngredients(sheet, ingredients, recipe_Col):
                             
                             perm = ' '.join(perm)
 
-                            #print("Checking for substring as ingredient: ", perm)
-                            #closestI = difflib.get_close_matches(perm, ingredients, cutoff=1)
-                            #print("closestI: ", closestI)
                             if perm in ingredients_to_avoid:
                                 continue
                             #if permutation is a valid ingredient, add it to ingredient list
@@ -261,10 +307,7 @@ def cleanIngredients(sheet, ingredients, recipe_Col):
                         j-=1
                         lengthRI-=1
                     j+=1
-
-                #print(sheet['Title'][index])
-                #print("FINAL recipeIngredients: ", recipeIngredients)
-
+                
                 #add cleaned ingredients over previous ones
                 sheet[col][index] = recipeIngredients
     return sheet
@@ -288,32 +331,8 @@ def main():
         sheet = pd.read_csv(oldFile)
     #1M dataset cleaning if import dataset
     if oldFile.endswith(".json"):
-        print("Loading recipes into program.")
-        sheet = pd.read_json(oldFile)
-        print("Finished")
-
-        row = 0
-        ingredients = []
-        lenIng = len(sheet['ingredients'])
-        print("Formatting recipes...")
-        for recipe in sheet['ingredients']:
-            ing = []
-            for ingredient in recipe:
-                ing.append(ingredient['text'])
-            
-            sheet['ingredients'][row] = [*ing]
-            #sheet['ingredients'][row] = rIng
-            #print("sheet['ingredients'][row]: ", sheet['ingredients'][row])
-            
-            row += 1
-            print("\r", end='')
-            print("Current row:", row, "out of", lenIng, end='')
-        print(" done.")
-        #print(sheet.info)
-
-        #i need to test this, or just move it over to other file
-        oldFile = os.getcwd() + "\\Datasets\\" + args.oldfile[:len(args.oldfile)-4] + 'csv'
-        sheet.to_csv(oldFile)
+        oldFile = loadJSON(oldFile, args)
+        sheet = pd.read_csv(oldFile)
 
     ingredients = loadIngredients()
 
@@ -328,14 +347,14 @@ def main():
     sheet = cleanIngredients(sheet, ingredients, args.column)
     print("\nCompleted.")
 
-    #print(sheet.head())
-    #print(sheet.info())
-    #print(sheet.describe())
-
     print("Copying to file " + args.newfile + "...")
     #copy sheet into a new file
     sheet.to_csv(newFile, index=False)
     print("Completed.")
+    
+    #if temp csv file was created with 1M dataset, delete it after done processing
+    if (args.oldfile).endswith(".json"):
+        os.remove(oldFile)
     return
 
 if __name__ == "__main__":
