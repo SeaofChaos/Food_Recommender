@@ -18,6 +18,7 @@ import difflib
 import cv2
 import os
 import ast
+import time
 import random
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -31,39 +32,37 @@ from sklearn.metrics.pairwise import cosine_similarity
 #   3. Make input file dynamic and
 #       not set to the 15k file every time. 
 #   4. COMMENT.
+#   5. SORT RECIPE NAMES BEFORE CALCULATING SIMILARITY
 ################################
 
 def main():
-    # import recipes
+    print("Loading data...", end='', flush=True)
+    # import recipe data
     recipeSheet = pd.read_csv(os.getcwd() + '\\Cleaned_Datasets\\CleanedTest15k.csv')
 
     recipes = recipeSheet['ingredients']
 
-    #print(recipes)
+    print("done.\nGetting feature vector...", end='', flush=True)
 
-    # convert recipes into string
+    #convert recipes into string
     recipes = [ast.literal_eval(recipe) for recipe in recipes]
     recipes = [' '.join(recipe) for recipe in recipes]
 
-    #print(type(recipes[0]))
-    #print(recipes[0])
-    #print(type(recipes))
-    #print(len(recipes))
-
-    # convert recipes into feature vectors
+    #convert recipes into feature vectors
     vectorizer = TfidfVectorizer()
     featureVector = vectorizer.fit_transform(recipes)
 
-    #print(featureVector)
-    #print(featureVector.shape)
+    print("done.\nGetting cosing similarity...", end='', flush=True)
 
-    # get cosine similarity between recipes
+    #get cosine similarity between recipes
     cosSim = cosine_similarity(featureVector)
+
+    print("done.\n", flush=True)
 
     choice = int(input("Enter number of choice:\n1. Enter recipe name.\n2. Random recipe.\n3. Quit\n"))
     
     if choice == 1:
-        # get valid recipe
+        #get valid recipe
         while True:
             recipeName = input("Enter recipe: ")
             if recipeName not in recipeSheet['title'].tolist():
@@ -87,37 +86,38 @@ def main():
                     print("Invalid input. Please enter a new recipe.")
             else:
                 break
-        # get the index of selected recipe
+        #get the index of selected recipe
         recipeIdx = recipeSheet[recipeSheet['title'] == recipeName]['index'].values[0]
     elif choice == 2:
         recipeName = random.choice(recipeSheet['title'])
-        # get the index of selected recipe
+        #get the index of selected recipe
         recipeIdx = recipeSheet[recipeSheet['title'] == recipeName]['index'].values[0]
     else:
         return        
 
-    print("\nFinding similar recipes to", recipeName)
+    print("\nFinding similar recipes to \"" + recipeName + '\"')
 
-    # get list of this recipe's similarity scores
+    print(len(list(enumerate(cosSim[recipeIdx]))))
+
+    #get list of this recipe's similarity scores
     recSim = list(enumerate(cosSim[recipeIdx]))
 
-    # sort list so most similar recipes are at front
+    #sort list so most similar recipes are at front
     sortedSim = sorted(recSim, key=lambda x:x[1], reverse=True)
     
     print("\nRecommended recipes")
     print("----------------------------------------")
     i = 1
-    # print out similar values starting from most similar
+    #print out similar values starting from most similar
     while True:
-        #print("i: ", i)
         print((recipeSheet[recipeSheet['index'] == sortedSim[i][0]].values[0])[4])
+        #print out 5 recipes
         if i%5 == 0:
             print("----------------------------------------")
             more = input("\nWould you like to see more recipes? (y/n): ").lower()
             if more != 'y':
                 break
             print("\n----------------------------------------")
-        #print("\n", end='')
         i+=1
 
     return

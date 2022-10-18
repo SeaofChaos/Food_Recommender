@@ -107,22 +107,22 @@ def loadIngredients():
 
     #recipe dataset obtained from: https://recipenlg.cs.put.poznan.pl/dataset
     if os.path.isfile(path +  "full_dataset.csv"):
-        print("Loading ingredients...", end='')
+        print("Loading ingredients...", end='', flush=True)
         recipes = pd.read_csv(path+"full_dataset.csv")
-        print("done.",)
-        print("Loading recipes...")
+        print("done.")
+        print("Loading recipes...", flush=True)
         raw = recipes['NER'].tolist()
         print("done.")
 
-        print("Formatting ingredients...")
+        print("Formatting ingredients...", flush=True)
 
         ingredients_raw = []
-        print("  Changing type to list...", end='')
+        print("  Changing type to list...", end='', flush=True)
         for row in raw:
             ingredients_raw = ast.literal_eval(row)
         print("done.")
         
-        print("  Creating singular list...", end='')
+        print("  Creating singular list...", end='', flush=True)
         
         ingredients.extend([j for i in ingredients_raw for j in i])
         print("done.")
@@ -133,13 +133,13 @@ def loadIngredients():
     
     #recipe dataset obtained from: https://www.kaggle.com/datasets/kaggle/recipe-ingredients-dataset
     if os.path.isfile(path + "Ingredients.json"):
-        print("Loading ingredients...", end='')
+        print("Loading ingredients...", end='', flush=True)
         sheet = pd.read_json(path+"Ingredients.json")
 
         ingredients_raw = sheet['ingredients'].tolist()
         print("done.")
         
-        print("  Creating singular list...", end='')
+        print("  Creating singular list...", end='', flush=True)
         
         ingredients.extend([j for i in ingredients_raw for j in i])
         print("done.")        
@@ -149,10 +149,10 @@ def loadIngredients():
     if not openedFile:
         sys.exit("Invalid recipe dataset. Make sure file name is correct.")
 
-    print("  Making all ingredients lowercase...", end='')
+    print("  Making all ingredients lowercase...", end='', flush=True)
     ingredients = [i.lower() for i in ingredients]
     print("done.")
-    print("  Removing duplicates...", end='')
+    print("  Removing duplicates...", end='', flush=True)
     ingredients = [*set(ingredients)]
     print("done.")
 
@@ -170,14 +170,14 @@ def loadJSON(oldFile, args):
     :param args: Contains the command line arguments.
     :return: Returns name of file .
     """
-    print("Loading recipes into program.")
+    print("Loading recipes into program.", flush=True)
     sheet = pd.read_json(oldFile)
     print("Finished")
 
     row = 0
     ingredients = []
     lenIng = len(sheet['ingredients'])
-    print("Formatting recipes...")
+    print("Formatting recipes...", flush=True)
     for recipe in sheet['ingredients']:
         ing = []
         for ingredient in recipe:
@@ -342,7 +342,7 @@ def main():
     #drop all recipes with NaN value for Title or Ingredients
     sheet = sheet.dropna(subset=[args.column])
     
-    print("Cleaning recipes...")
+    print("Cleaning recipes...", flush=True)
     #clean recipes into useful format (only ingredient names)
     sheet = cleanIngredients(sheet, ingredients, args.column)
     print("\nCompleted.")
@@ -351,7 +351,7 @@ def main():
         #correctly name index column
         sheet.rename(columns = {'Unnamed: 0':'index'}, inplace = True)
 
-    print("Copying to file " + args.newfile + "...")
+    print("Copying to file " + args.newfile + "...", flush=True)
     #copy sheet into a new file
     sheet.to_csv(newFile, index=False)
     print("Completed.")
