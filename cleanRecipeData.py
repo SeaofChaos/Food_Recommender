@@ -347,6 +347,10 @@ def main():
     sheet = cleanIngredients(sheet, ingredients, args.column)
     print("\nCompleted.")
 
+    if 'Unnamed: 0' in sheet.columns:
+        #correctly name index column
+        sheet.rename(columns = {'Unnamed: 0':'index'}, inplace = True)
+
     print("Copying to file " + args.newfile + "...")
     #copy sheet into a new file
     sheet.to_csv(newFile, index=False)
