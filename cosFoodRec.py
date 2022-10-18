@@ -60,50 +60,64 @@ def main():
     # get cosine similarity between recipes
     cosSim = cosine_similarity(featureVector)
 
-    # get valid recipe
-    while True:
-        recipeName = input("Enter recipe: ")
-        if recipeName not in recipeSheet['title'].tolist():
-            recipeName = difflib.get_close_matches(recipeName, recipeSheet['title'].tolist(), cutoff=0.7)
-            num = 0
-            try:
-                num = int(input("No direct match found. Enter the corresponding"+
-                            " number (1-3) for the following recipes:\n"+
-                            "1. "+recipeName[0]+" \n2. "+recipeName[1]+"\n3. "+recipeName[2]+"\n"
-                            "\nor (4-5) for the following options:\n4. re-enter recipe name\n5. quit.\n"))
-            except:
-                print("No close recipe names found. Try entering a different recipe name.")
-            if (num == 1 or num == 2 or num == 3):
-                recipeName = recipeName[num-1]
-                break
-            elif (num == 4):
-                continue
-            elif (num == 5):
-                return
+    choice = int(input("Enter number of choice:\n1. Enter recipe name.\n2. Random recipe.\n3. Quit\n"))
+    
+    if choice == 1:
+        # get valid recipe
+        while True:
+            recipeName = input("Enter recipe: ")
+            if recipeName not in recipeSheet['title'].tolist():
+                recipeName = difflib.get_close_matches(recipeName, recipeSheet['title'].tolist(), cutoff=0.7)
+                num = 0
+                try:
+                    num = int(input("No direct match found. Enter the corresponding"+
+                                " number (1-3) for the following recipes:\n"+
+                                "1. "+recipeName[0]+" \n2. "+recipeName[1]+"\n3. "+recipeName[2]+"\n"
+                                "\nor (4-5) for the following options:\n4. re-enter recipe name\n5. quit.\n"))
+                except:
+                    print("No close recipe names found. Try entering a different recipe name.")
+                if (num == 1 or num == 2 or num == 3):
+                    recipeName = recipeName[num-1]
+                    break
+                elif (num == 4):
+                    continue
+                elif (num == 5):
+                    return
+                else:
+                    print("Invalid input. Please enter a new recipe.")
             else:
-                print("Invalid input. Please enter a new recipe.")
-        else:
-            break
-    
-    # get the index of selected recipe
-    recipeIdx = recipeSheet[recipeSheet['title'] == recipeName]['index'].values[0]
-    
+                break
+        # get the index of selected recipe
+        recipeIdx = recipeSheet[recipeSheet['title'] == recipeName]['index'].values[0]
+    elif choice == 2:
+        recipeName = random.choice(recipeSheet['title'])
+        # get the index of selected recipe
+        recipeIdx = recipeSheet[recipeSheet['title'] == recipeName]['index'].values[0]
+    else:
+        return        
+
+    print("\nFinding similar recipes to", recipeName)
+
     # get list of this recipe's similarity scores
     recSim = list(enumerate(cosSim[recipeIdx]))
 
     # sort list so most similar recipes are at front
     sortedSim = sorted(recSim, key=lambda x:x[1], reverse=True)
-
+    
+    print("\nRecommended recipes")
+    print("----------------------------------------")
     i = 1
     # print out similar values starting from most similar
     while True:
         #print("i: ", i)
         print((recipeSheet[recipeSheet['index'] == sortedSim[i][0]].values[0])[4])
         if i%5 == 0:
+            print("----------------------------------------")
             more = input("\nWould you like to see more recipes? (y/n): ").lower()
             if more != 'y':
                 break
-        print("\n", end='')
+            print("\n----------------------------------------")
+        #print("\n", end='')
         i+=1
 
     return
