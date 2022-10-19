@@ -46,6 +46,8 @@ def main():
 
     #convert recipes into string
     recipes = [ast.literal_eval(recipe) for recipe in recipes]
+    for recipe in recipes:
+        recipe = recipe.sort()
     recipes = [' '.join(recipe) for recipe in recipes]
 
     #convert recipes into feature vectors
@@ -59,22 +61,34 @@ def main():
 
     print("done.\n", flush=True)
 
-    choice = int(input("Enter number of choice:\n1. Enter recipe name.\n2. Random recipe.\n3. Quit\n"))
-    
+    choice = 0
+    while choice not in [1, 2, 3]:
+        try:
+            choice = int(input("Enter number of choice:\n1. Enter recipe name.\n2. Random recipe.\n3. Quit\n"))
+        except:
+            print("Invalid choice, please enter a number 1-3")
+
     if choice == 1:
         #get valid recipe
         while True:
             recipeName = input("Enter recipe: ")
             if recipeName not in recipeSheet['title'].tolist():
-                recipeName = difflib.get_close_matches(recipeName, recipeSheet['title'].tolist(), cutoff=0.7)
+                recipeName = difflib.get_close_matches(recipeName, recipeSheet['title'].tolist(), cutoff=0.5)
                 num = 0
                 try:
                     num = int(input("No direct match found. Enter the corresponding"+
                                 " number (1-3) for the following recipes:\n"+
-                                "1. "+recipeName[0]+" \n2. "+recipeName[1]+"\n3. "+recipeName[2]+"\n"
+                                "1. "+recipeName[0]+" \n2. "+
+                                (recipeName[1] if len(recipeName)>1 else "None")+"\n3. "+
+                                (recipeName[2] if len(recipeName)>2 else "None")+"\n"
                                 "\nor (4-5) for the following options:\n4. re-enter recipe name\n5. quit.\n"))
                 except:
                     print("No close recipe names found. Try entering a different recipe name.")
+                
+                if (len(recipeName) == 1 and (num == 2 or num == 3)) or (len(recipeName) == 2 and num == 3):
+                    print("Please make a valid recipe selection")
+                    continue
+                
                 if (num == 1 or num == 2 or num == 3):
                     recipeName = recipeName[num-1]
                     break
@@ -96,8 +110,6 @@ def main():
         return        
 
     print("\nFinding similar recipes to \"" + recipeName + '\"')
-
-    print(len(list(enumerate(cosSim[recipeIdx]))))
 
     #get list of this recipe's similarity scores
     recSim = list(enumerate(cosSim[recipeIdx]))
