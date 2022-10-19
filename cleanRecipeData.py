@@ -176,7 +176,6 @@ def loadJSON(oldFile, args):
 
     row = 0
     ingredients = []
-    lenIng = len(sheet['ingredients'])
     print("Formatting recipes...", flush=True)
     for recipe in sheet['ingredients']:
         ing = []
@@ -186,10 +185,10 @@ def loadJSON(oldFile, args):
         sheet['ingredients'][row] = [*ing]
         #sheet['ingredients'][row] = rIng
         #print("sheet['ingredients'][row]: ", sheet['ingredients'][row])
-        
-        row += 1
+
         print("\r", end='')
-        print("Current row:", row, "out of", lenIng, end='')
+        print("Current row:", row, "out of", len(sheet)-1, end='')
+        row += 1
     print(" done.")
     #print(sheet.info)
 
@@ -317,9 +316,10 @@ def main():
     #CLA argument definitions
     parser = argparse.ArgumentParser("Copy recipe data set, clean it, and output in a new file.\n")
     parser.add_argument('--oldfile', '-f', type=str, required=True, help="File containing uncleaned recipe data.")
-    parser.add_argument('--column', '-c', type=str, required=True, help="Column name with recipes.")
+    parser.add_argument('--column', '-c', type=str, required=True, help="Column name with ingredients.")
     parser.add_argument('--newfile', '-n', type=str, required=True, help="New file to copy cleaned data into.")
     parser.add_argument('--overwriteFile', '-o', action='store_false', help="Give warning about overwriting a pre-existing file.")
+    parser.add_argument('--removeDup', '-d', action='store_true', help="Remove duplicate recipe names.")
     args = parser.parse_args()
 
     #read CLA for uncleaned data file and new data file name
@@ -333,6 +333,9 @@ def main():
     if oldFile.endswith(".json"):
         oldFile = loadJSON(oldFile, args)
         sheet = pd.read_csv(oldFile)
+    
+    if args.removeDup:
+        sheet = sheet.drop_duplicates(subset='title', keep='first')
 
     ingredients = loadIngredients()
 
@@ -350,6 +353,16 @@ def main():
     if 'Unnamed: 0' in sheet.columns:
         #correctly name index column
         sheet.rename(columns = {'Unnamed: 0':'index'}, inplace = True)
+    
+    if args.removeDup:
+        print("Adjusting rows for removed duplicates...", flush=True)
+        j = 0
+        for i, row in sheet.iterrows():
+            sheet.at[i, 'index'] = j
+            j += 1
+            print('\r', end='')
+            print("Row:", i, end='')
+        print("\nCompleted.")
 
     print("Copying to file " + args.newfile + "...", flush=True)
     #copy sheet into a new file
@@ -359,6 +372,7 @@ def main():
     #if temp csv file was created with 1M dataset, delete it after done processing
     if (args.oldfile).endswith(".json"):
         os.remove(oldFile)
+    
     return
 
 if __name__ == "__main__":

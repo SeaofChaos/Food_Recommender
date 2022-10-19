@@ -18,41 +18,64 @@ import difflib
 import cv2
 import os
 import ast
+import sys
 import time
 import random
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+pd.options.mode.chained_assignment = None
+
 ################################
 #   To do:
 #
-#   1. If I have extra time, add in some error checking
-#   2. Limit file size 
+#   1. Limit file size 
 #       to prevent an enormous cosine matrix. 
-#   3. Make input file dynamic and
+#   2. Make input file dynamic and
 #       not set to the 15k file every time. 
-#   4. COMMENT.
-#   5. SORT RECIPE NAMES BEFORE CALCULATING SIMILARITY
 ################################
 
 def main():
+    if len(sys.argv) != 2:
+        exit("Usage: python3 " + sys.argv[0] + " cleaned_dataset")
+
+    fileName = sys.argv[1]
+
+    if fileName not in os.listdir(os.getcwd() + '\\Cleaned_Datasets'):
+        exit("Invalid dataset file name.")
+
     print("Loading data...", end='', flush=True)
     # import recipe data
-    recipeSheet = pd.read_csv(os.getcwd() + '\\Cleaned_Datasets\\CleanedTest15k.csv')
+    recipeSheet = pd.read_csv(os.getcwd() + '\\Cleaned_Datasets\\' + fileName)
+
+    if len(recipeSheet) > 50000:
+        exit("\nFile size limited to 50,000 rows to prevent high memory usage.")
 
     recipes = recipeSheet['ingredients']
 
     print("done.\nGetting feature vector...", end='', flush=True)
 
-    #convert recipes into string
+    #convert recipe strings into lists
     recipes = [ast.literal_eval(recipe) for recipe in recipes]
-    for recipe in recipes:
-        recipe = recipe.sort()
+    recipes = list(map(sorted, recipes))
+    #convert recipe lists into simplified string
     recipes = [' '.join(recipe) for recipe in recipes]
+    
+    #If titles are used in feature vector, the similarity will be more biased towards
+    #similarly named recipes. I have taken it out for now but it can be useful for
+    #getting similar recipes. Since I want to recommend different recipes, it seems
+    #more useful to base it on ingredients alone.
+
+    # titles = recipeSheet['title']
+    # titles[:] = [' ' + s for s in recipeSheet['title']]
+
+    recipes = recipes #+ titles
 
     #convert recipes into feature vectors
     vectorizer = TfidfVectorizer()
     featureVector = vectorizer.fit_transform(recipes)
+
+    # titles[:] = [s[1:] for s in recipeSheet['title']]
 
     print("done.\nGetting cosing similarity...", end='', flush=True)
 
@@ -110,6 +133,8 @@ def main():
         return        
 
     print("\nFinding similar recipes to \"" + recipeName + '\"')
+    ingredients = ast.literal_eval((recipeSheet[recipeSheet['title'] == recipeName].values[0])[1])
+    print("Ingredients: ", ", ".join(ingredients))
 
     #get list of this recipe's similarity scores
     recSim = list(enumerate(cosSim[recipeIdx]))
@@ -119,18 +144,30 @@ def main():
     
     print("\nRecommended recipes")
     print("----------------------------------------")
-    i = 1
+    i = 0
+    j = 1
     #print out similar values starting from most similar
     while True:
-        print((recipeSheet[recipeSheet['index'] == sortedSim[i][0]].values[0])[4])
+        i += random.randint(1, 3) #add a little bit of randomness to recommended recipes
+        try:
+            print((recipeSheet[recipeSheet['index'] == sortedSim[i][0]].values[0])[4]) #title
+            print((recipeSheet[recipeSheet['index'] == sortedSim[i][0]].values[0])[2]) #link
+
+            ingredients = ast.literal_eval((recipeSheet[recipeSheet['index'] == sortedSim[i][0]].values[0])[1])
+            print("Ingredients:", ", ".join(ingredients)) #ingredients
+        except:
+            sortedSim.remove(recipeSheet[recipeSheet['index'] == sortedSim[i][0]])
+            #i+=1
+            continue
         #print out 5 recipes
-        if i%5 == 0:
+        if j%5 == 0:
             print("----------------------------------------")
             more = input("\nWould you like to see more recipes? (y/n): ").lower()
             if more != 'y':
                 break
             print("\n----------------------------------------")
-        i+=1
+        j+=1
+        print("")
 
     return
 
