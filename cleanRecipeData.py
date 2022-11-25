@@ -8,7 +8,7 @@
 #
 #   Filename:   cleanRecipeData.py
 #   Purpose:    Cleans datasets containing recipes into a format that 
-#               my machine learning algorithm can easily work with.
+#               my machine learning algorithm can work with.
 #
 ########################################################
 
@@ -335,7 +335,10 @@ def main():
         sheet = pd.read_csv(oldFile)
     
     if args.removeDup:
-        sheet = sheet.drop_duplicates(subset='title', keep='first')
+        try:
+            sheet = sheet.drop_duplicates(subset='title', keep='first')
+        except:
+            exit("Invalid file type. Compatible file types include: '.csv' '.json'")
 
     ingredients = loadIngredients()
 
