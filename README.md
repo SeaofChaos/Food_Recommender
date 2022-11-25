@@ -22,7 +22,7 @@ pip install -r /path/to/requirements.txt
 environment to avoid any possible version conflicts.***
 
 ## Usage
-### [cleanRecipeData.py](Food_Recommender/blob/master/cleanRecipeData.py)
+### [cleanRecipeData.py](/cleanRecipeData.py)
 ```
 usage: Copy recipe data set, clean it, and output in a new file.
  [-h] --oldfile OLDFILE --column COLUMN --newfile NEWFILE [--overwriteFile] [--removeDup]
@@ -39,7 +39,7 @@ options:
   --removeDup, -d       Remove duplicate recipe names.
 ```
 
-### [cosFoodRec.py](Food_Recommender/blob/master/cosFoodRec.py)
+### [cosFoodRec.py](/cosFoodRec.py)
 ```
 usage: Copy recipe data set, clean it, and output in a new file.
  [-h] --datafile DATAFILE [--usetitle]
