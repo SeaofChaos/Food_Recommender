@@ -64,7 +64,7 @@ with the collection and cleaning of data, using this data with artificial
 intelligence, and producing results that would've been useful to our previous 
 project that we never fully completed. 
 
-## Implementation
+### Implementation
 One of the most difficult challenges I faced was procuring clean data which I
 could use for my specific purpose. While there were a lot of datasets available, 
 most had recipes that contained large ingredients (e.g. "8 skinless, boneless 
@@ -77,7 +77,7 @@ In order to find similar recipes, I decided that a simple yet effective way woul
 be to create a cosine similarity between the different recipes using feature
 vectors. This method is useful for finding similar items based on keywords. 
 
-### [cleanRecipeData.py](/cleanRecipeData.py)
+#### [cleanRecipeData.py](/cleanRecipeData.py)
 I determined that the AI algorithm would be based on the ingredient names alone, 
 so I would first need to clean the recipe data. After removing any invalid rows, 
 the uncleaned dataset is run through an algorithm that tries to extract only the 
@@ -90,7 +90,7 @@ ingredient was found, then it is removed.
 Any uncleaned datasets should be placed inside the `Datasets` folder to use. The 
 cleaned datasets will be saved to the `Cleaned_Datasets`.
 
-### [cosFoodRec.py](/cosFoodRec.py)
+#### [cosFoodRec.py](/cosFoodRec.py)
 The AI algorithm I chose was based on content-based filtering. This is an approach
 where the discrete characteristics of an item are compared to other items. While 
 the algorithm is simple, it is useful for me and the overall purpose of this 
